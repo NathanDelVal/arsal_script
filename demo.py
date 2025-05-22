@@ -1,23 +1,34 @@
+import openpyxl as openpyxl
+from openpyxl import load_workbook
+import openpyxl.workbook
+import openpyxl.workbook.properties
 import pandas as pd
+
+openpyxl.workbook.properties.CalcProperties.fullCalcOnLoad = True
 # import numpy as np
 # import matplotlib.pyplot as plt
 
-# sheets = pd.read_excel("arsal.xlsx", sheet_name=None, engine="openpyxl")    
+sheets = pd.read_excel("arsal.xlsx", sheet_name=None, engine="openpyxl")    
 
-# head_ref = ''
+sheet = sheets["08-RST_ANL_VRF"]
 
-# for df in sheets["08-RST_ANL_VRF"].head().items():
-#     if "Cidade2" in df[1].values:
-#         head_ref = df[0]
+heads_ref = (sheet.iloc[1, :].values[15:])
 
-# print(sheets["08-RST_ANL_VRF"][head_ref])
+for value in heads_ref:
+    matches = (sheet == value)
+    for row_idx, col_idx in zip(*matches.values.nonzero()):
+        row_label = sheet.index[row_idx]
+        col_label = sheet.columns[col_idx]
+        print(f"Value '{value}' found at row '{row_label}', column '{col_label}'")
 
-# Create a DataFrame with values and a formula
-df = pd.DataFrame({
-    "A": [10, 20, 30],
-    "B": [1, 2, 3],
-    "C": ["=A2+B2", "=A3+B3", "=A4+B4"]  # Excel-style formulas
-})
+# heads_ref = ["08-RST_ANL_VRF"]
 
-# Save to Excel — keep index=False to avoid shifting references
-df.to_excel("formulas.xlsx", index=False)
+# for s in sheets:
+
+head_ref = ''
+
+# print(sheet[head_ref])
+
+# Open the file you've written
+wb = load_workbook("$testeee.xlsx")
+wb.save("$testeee.xlsx")
