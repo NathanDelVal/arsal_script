@@ -4,6 +4,7 @@ import xlwings as xw
 import datetime
 import tempfile
 import shutil
+import win32com.client as win32
 
 file_path = sys.argv[1]
 
@@ -49,27 +50,10 @@ try:
             os.path.dirname(file_path),
             f"{os.path.splitext(file_name)[0]}_COPY_{int(datetime.datetime.timestamp(datetime.datetime.now()))}{os.path.splitext(file_name)[1]}"
         )
-        
-        # sheet = dest_wb.sheets['08-RST_ANL_VRF']
 
-        # # Column to copy (e.g., column B = 2)
-        # source_col = 2
+        # print(DumpCOMObject())
 
-        # # Get the number of rows in use
-        # n_rows = sheet.used_range.last_cell.row
-
-        # # Get the last used column and calculate the new column index
-        # last_col = sheet.used_range.last_cell.column
-        # target_col = last_col + 1
-
-        # # Copy values from source to new column
-        # source_range = sheet.range((1, source_col), (n_rows, source_col))
-        # target_range = sheet.range((1, target_col), (n_rows, target_col))
-
-        # # Copy values and formulas
-        # target_range.value = source_range.value
-        
-        dest_wb.save(copy_path)
+        # dest_wb.save(copy_path)
 
         src_wb.close()
         dest_wb.close()
