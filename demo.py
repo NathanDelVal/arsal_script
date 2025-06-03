@@ -5,6 +5,7 @@ import datetime
 import tempfile
 import shutil
 import win32com.client as win32
+import formulas
 
 file_path = sys.argv[1]
 
@@ -26,6 +27,13 @@ def clean_temp_folder(path):
         except Exception:
             pass  # skip files in use or protected
 
+def index_to_column_letter(index):
+    letters = ''
+    while index:
+        index, remainder = divmod(index - 1, 26)
+        letters = chr(65 + remainder) + letters
+    return letters
+
 try:
     with xw.App(visible=False) as app:
         src_wb = xw.Book(file_path)
@@ -36,23 +44,38 @@ try:
         for sheet in src_wb.sheets:
             sheet.copy(after=dest_wb.sheets[-1])
         dest_wb.sheets.__delitem__(0)  # remove initial blank sheet
-
-        # 🔧 Optional: External reference cleanup (commented)
-        # for sheet in dest_wb.sheets:
-        #     formulas = [list(row) for row in sheet.used_range.formula]
-        #     for r in range(len(formulas)):
-        #         for c in range(len(formulas[r])):
-        #             if '[arsal.xlsx]' in formulas[r][c]:
-        #                 formulas[r][c] = formulas[r][c].replace('[arsal.xlsx]', '')
-        #     sheet.used_range.formula = tuple(tuple(row) for row in formulas)
-
+        
+        try:
+            #variáveis de referência das tabelas
+            target_sht = dest_wb.sheets[formulas.panilha_alvo]        
+            lista = dest_wb.sheets[formulas.lista_de_referencia]
+            rst = dest_wb.sheets[formulas.planilha_de_referencia]
+        except KeyError as e:
+            print(f"ERRO: A planilha {e} não foi encontrada no arquivo.")
+            src_wb.close()
+            dest_wb.close()
+            sys.exit(1)
+            
+        # print([v for v in target_sht[0, :].value if v is not None])  #find first row with values
+        # next_col_n = index_to_column_letter(last_col_i + 1) #next column letter
+        
+        lista_de_referencia = dest_wb.sheets[formulas.lista_de_referencia]
+        planilha_de_referencia = dest_wb.sheets[formulas.planilha_de_referencia]
+        planilha_alvo = dest_wb.sheets[formulas.panilha_alvo]             
+        
+        headers = planilha_alvo.range((formulas.linha_headers, 1), (formulas.linha_headers, planilha_alvo.used_range.last_cell.column)).value
+        
+        cidade2 = planilha_alvo.range((1, headers.index("Conta") + 1), (planilha_alvo.used_range.last_cell.row, headers.index("Conta") + 1)).value
+        
+        cidade2 = formulas.procx([c for c in cidade2[3:] if c is not None], 
+                                 lista_de_referencia.range("Q3:Q80").value, 
+                                 lista_de_referencia.range("R3:R80").value)
+        
         copy_path = os.path.join(
             os.path.dirname(file_path),
             f"{os.path.splitext(file_name)[0]}_COPY_{int(datetime.datetime.timestamp(datetime.datetime.now()))}{os.path.splitext(file_name)[1]}"
         )
-
-        # print(DumpCOMObject())
-
+    
         # dest_wb.save(copy_path)
 
         src_wb.close()
@@ -60,7 +83,7 @@ try:
         print("Processamento concluído com sucesso.")
 
 except Exception as e:
-    print(f"Erro durante execução: {e}")
+    print(f"ERRO DURANTE EXECUÇÃO: {e}")
 
 finally:
     pass
