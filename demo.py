@@ -13,8 +13,6 @@ file_path = sys.argv[1]
 if not os.path.isfile(file_path):
     print(f"O arquivo {file_path} não existe.")
     sys.exit(1)
-    
-# def add_column():
 
 def clean_temp_folder(path):
     for entry in os.listdir(path):
@@ -47,36 +45,43 @@ try:
         
         try:
             #variáveis de referência das tabelas
-            target_sht = dest_wb.sheets[formulas.panilha_alvo]        
-            lista = dest_wb.sheets[formulas.lista_de_referencia]
-            rst = dest_wb.sheets[formulas.planilha_de_referencia]
+            lista_de_referencia = dest_wb.sheets[formulas.lista_de_referencia]
+            planilha_de_referencia = dest_wb.sheets[formulas.planilha_de_referencia]
+            planilha_alvo = dest_wb.sheets[formulas.planilha_alvo]
         except KeyError as e:
-            print(f"ERRO: A planilha {e} não foi encontrada no arquivo.")
+            print(f"ERRO AO ACESSAR O ARQUIVO: {e}")
             src_wb.close()
             dest_wb.close()
             sys.exit(1)
-            
-        # print([v for v in target_sht[0, :].value if v is not None])  #find first row with values
-        # next_col_n = index_to_column_letter(last_col_i + 1) #next column letter
         
-        lista_de_referencia = dest_wb.sheets[formulas.lista_de_referencia]
-        planilha_de_referencia = dest_wb.sheets[formulas.planilha_de_referencia]
-        planilha_alvo = dest_wb.sheets[formulas.panilha_alvo]             
-        
-        headers = planilha_alvo.range((formulas.linha_headers, 1), (formulas.linha_headers, planilha_alvo.used_range.last_cell.column)).value
-        
-        cidade2 = planilha_alvo.range((1, headers.index("Conta") + 1), (planilha_alvo.used_range.last_cell.row, headers.index("Conta") + 1)).value
-        
-        cidade2 = formulas.procx([c for c in cidade2[3:] if c is not None], 
+        last_row = planilha_alvo.used_range.last_cell.row
+        last_col = planilha_alvo.used_range.last_cell.column
+         
+        headers = planilha_alvo.range((formulas.linha_headers, 1), (formulas.linha_headers, last_col)).value
+        temp_c = planilha_alvo.range((1, headers.index("Conta") + 1), (last_row, headers.index("Conta") + 1)).value
+
+        temp_c = formulas.procx([c for c in temp_c[formulas.linha_headers:] if c is not None], 
                                  lista_de_referencia.range("Q3:Q80").value, 
                                  lista_de_referencia.range("R3:R80").value)
-        
+
+        planilha_alvo[formulas.linha_headers - 1:, last_col].options(transpose=True).value = ["Cidade2"] + temp_c
+        last_col += 1
+
+        temp_c = planilha_alvo.range(
+            (1, headers.index("Valor") + 1), (last_row, headers.index("Valor") + 1)
+            ).value 
+
+        temp_c = [0 if c == "N.D" else c for c in temp_c[formulas.linha_headers:]]
+
+        planilha_alvo[formulas.linha_headers - 1:, last_col].options(transpose=True).value = ["Resultado independente"] + temp_c
+        last_col += 1
+
         copy_path = os.path.join(
             os.path.dirname(file_path),
             f"{os.path.splitext(file_name)[0]}_COPY_{int(datetime.datetime.timestamp(datetime.datetime.now()))}{os.path.splitext(file_name)[1]}"
         )
     
-        # dest_wb.save(copy_path)
+        dest_wb.save(copy_path)
 
         src_wb.close()
         dest_wb.close()
