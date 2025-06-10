@@ -12,7 +12,7 @@ def procx(value, lookup_array, return_array, if_not_found=None):
             index = lookup_array.index(value[v])
             value[v] = return_array[index]
     except Exception as e:
-        # print(f"{e} \n {lookup_array.index(value[v])}")
+        # print(f"{len(lookup_array)} // {len(return_array)}")
         value[v] = ""
     return value
 

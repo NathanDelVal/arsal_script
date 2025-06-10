@@ -33,7 +33,7 @@ try:
             planilha_de_referencia = dest_wb.sheets[params.planilha_de_referencia]
             planilha_alvo = dest_wb.sheets[params.planilha_alvo]
         except KeyError as e:
-            print(f"ERRO AO ACESSAR O ARQUIVO: {e}")
+            print(f"ERRO AO ACESSAR PLANILHA: {e}")
             src_wb.close()
             dest_wb.close()
             sys.exit(1)
@@ -45,14 +45,31 @@ try:
         
         conta = planilha_alvo.range((params.linha_headers + 1, headers.index("Conta") + 1), (last_row, headers.index("Conta") + 1)).value
         
-        cidade2 = formulas.procx([c for c in conta if c is not None], 
-                                 lista_de_referencia.range(f"Q:Q").value, 
-                                 lista_de_referencia.range(f"R:R").value)
+        cidade2 = formulas.procx([c for c in conta], 
+                                 [c for c in lista_de_referencia.range(f"Q:Q").value if c is not None], 
+                                 [c for c in lista_de_referencia.range(f"R:R").value if c is not None])
         
         analise = planilha_alvo.range((params.linha_headers + 1, headers.index("Análise") + 1), (last_row, headers.index("Análise") + 1)).value
         
         parecer_analise = planilha_alvo.range((params.linha_headers + 1, headers.index("Parecer Análise") + 1), (last_row, headers.index("Parecer Análise") + 1)).value
         
+        etapa_processo = planilha_alvo.range((1, headers.index("Ponto Coleta") + 1), (last_row, headers.index("Ponto Coleta") + 1)).value
+        etapa_processo = formulas.procx([c for c in etapa_processo[params.linha_headers:]], 
+                                 [c for c in lista_de_referencia.range(f"Z:Z").value if c is not None], 
+                                 [c for c in lista_de_referencia.range(f"AH:AH").value if c is not None])
+
+        formula1 = [f"{v1}{v2}{v3}{v4}" for v1,v2,v3,v4 in zip(cidade2,conta,analise,parecer_analise)]
+
+        formula2 = [f"{v1}{v2}{v3}{v4}{v5}" for v1,v2,v3,v4,v5 in zip(cidade2,conta,analise,parecer_analise, etapa_processo)] 
+        
+        id_vi = formulas.procx([c for c in formula2], 
+                [c for c in planilha_de_referencia.range(f"Y:Y").value if c is not None], 
+                [c for c in planilha_de_referencia.range(f"Z:Z").value if c is not None])
+
+        observacoes = formulas.procx([c for c in id_vi], 
+                [c for c in planilha_de_referencia.range(f"F:F").value if c is not None], 
+                [c for c in planilha_de_referencia.range(f"U:U").value if c is not None])
+
         planilha_alvo[params.linha_headers - 1:, last_col].options(transpose=True).value = ["Cidade2"] + cidade2
         planilha_alvo[params.linha_headers - 1, last_col].color = (0, 0, 139)
         last_col = planilha_alvo.used_range.last_cell.column
@@ -65,23 +82,23 @@ try:
         planilha_alvo[params.linha_headers - 1, last_col].color = (0, 0, 139)
         last_col += 1
 
-        temp_c = formulas.procx([c for c in analise if c is not None], 
-                                 lista_de_referencia.range(f"T:T").value, 
-                                 lista_de_referencia.range(f"V:V").value)
+        temp_c = formulas.procx([c for c in analise], 
+                                 [c for c in lista_de_referencia.range(f"T:T").value if c is not None], 
+                                 [c for c in lista_de_referencia.range(f"V:V").value if c is not None])
         planilha_alvo[params.linha_headers - 1:, last_col].options(transpose=True).value = ["Possui Frequência na Portaria?"]  + temp_c
         planilha_alvo[params.linha_headers - 1, last_col].color = (0, 0, 139)
         last_col += 1
         
-        temp_c = formulas.procx([c for c in analise if c is not None], 
-                                 lista_de_referencia.range(f"T:T").value, 
-                                 lista_de_referencia.range(f"W:W").value)
+        temp_c = formulas.procx([c for c in analise], 
+                                 [c for c in lista_de_referencia.range(f"T:T").value if c is not None], 
+                                 [c for c in lista_de_referencia.range(f"W:W").value if c is not None])
         planilha_alvo[params.linha_headers - 1:, last_col].options(transpose=True).value = ["Possui VMP na Portaria?"] + temp_c
         planilha_alvo[params.linha_headers - 1, last_col].color = (0, 0, 139)
         last_col += 1
         
-        temp_c = formulas.procx([c for c in analise if c is not None], 
-                                 lista_de_referencia.range(f"T:T").value, 
-                                 lista_de_referencia.range(f"U:U").value)
+        temp_c = formulas.procx([c for c in analise], 
+                                 [c for c in lista_de_referencia.range(f"T:T").value if c is not None], 
+                                 [c for c in lista_de_referencia.range(f"U:U").value if c is not None])
         planilha_alvo[params.linha_headers - 1:, last_col].options(transpose=True).value = ["Tipo Análise"] + temp_c
         planilha_alvo[params.linha_headers - 1, last_col].color = (0, 0, 139)
         last_col += 1
@@ -110,10 +127,6 @@ try:
         planilha_alvo[params.linha_headers - 1, last_col].color = (0, 0, 139)
         last_col += 1
         
-        etapa_processo = planilha_alvo.range((1, headers.index("Ponto Coleta") + 1), (last_row, headers.index("Ponto Coleta") + 1)).value
-        etapa_processo = formulas.procx([c for c in etapa_processo[params.linha_headers:] if c is not None], 
-                                 lista_de_referencia.range(f"Z:Z").value, 
-                                 lista_de_referencia.range(f"AH:AH").value)
         planilha_alvo[params.linha_headers - 1:, last_col].options(transpose=True).value = ["Etapa do Processo"] + etapa_processo
         planilha_alvo[params.linha_headers - 1, last_col].color = (0, 0, 139)
         last_col += 1
@@ -122,12 +135,10 @@ try:
         planilha_alvo[params.linha_headers - 1, last_col].color = (0, 0, 139)
         last_col += 1
         
-        formula1 = [f"{v1}{v2}{v3}{v4}" for v1,v2,v3,v4 in zip(cidade2,conta,analise,parecer_analise)]
         planilha_alvo[params.linha_headers - 1:, last_col].options(transpose=True).value = ["Fórmula para Cálculo"] + formula1
         planilha_alvo[params.linha_headers - 1, last_col].color = (0, 0, 139)
         last_col += 1
         
-        formula2 = [f"{v1}{v2}{v3}{v4}{v5}" for v1,v2,v3,v4,v5 in zip(cidade2,conta,analise,parecer_analise, etapa_processo)] 
         planilha_alvo[params.linha_headers - 1:, last_col].options(transpose=True).value = ["Fórmula para Cálculo 2"] + formula2
         planilha_alvo[params.linha_headers - 1, last_col].color = (0, 0, 139)
         last_col += 1
